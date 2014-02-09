@@ -38,9 +38,31 @@ namespace FactSat
             return f;
         }
 
+        static Dictionary<int, int> _scores = new Dictionary<int, int>();
+
         static int PickSplitVariable(Formula f)
         {
-            return f.First().First().Variable;
+            var assigned = f.GetAssignments();
+            var valid = _scores.Keys
+                .Where(x => !assigned.Any(y => y.Variable == x))
+                .OrderByDescending(x => _scores[x]);
+
+            int chosen = 0;
+            if (valid.Count() == 0) {
+                chosen = f
+                    .SelectMany(x => x.Select(y => y.Variable))
+                    .GroupBy(x => x)
+                    .Select(x => Tuple.Create(x.Key, x.Count()))
+                    .OrderByDescending(x => x.Item2)
+                    .First().Item1;
+
+                _scores.Add(chosen, 0);
+            } else {
+                chosen = valid.First();
+                ++_scores[chosen];
+            }
+
+            return chosen;
         }
 
         static Formula Satisfy(Formula f)
@@ -50,6 +72,9 @@ namespace FactSat
 
             if (f.Count == 0) return f;
             if (f.Any(x => x.Count == 0)) return null;
+
+            var assign = f.GetAssignments();
+            Console.WriteLine("{0}%", (assign.Count() * 100) / 1562);
 
             var split = PickSplitVariable(f);
 

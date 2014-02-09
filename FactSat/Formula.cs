@@ -52,7 +52,7 @@ namespace FactSat
 
     class Clause : IEnumerable<Literal>
     {
-        private HashSet<Literal> _literals;
+        private List<Literal> _literals;
 
         public int Count
         {
@@ -66,12 +66,12 @@ namespace FactSat
 
         public Clause()
         {
-            _literals = new HashSet<Literal>();
+            _literals = new List<Literal>();
         }
 
         public Clause(IEnumerable<Literal> literals)
         {
-            _literals = new HashSet<Literal>(literals);
+            _literals = new List<Literal>(literals);
         }
 
         public Clause Clone()
@@ -110,7 +110,16 @@ namespace FactSat
 
         public bool Equals(Clause clause)
         {
-            return _literals.Zip(clause._literals, (a, b) => a.Equals(b)).All(x => x);
+            return _literals.Count == clause._literals.Count && _literals.All(x => clause._literals.Contains(x));
+        }
+
+        public bool HasVariable(int var)
+        {
+            for (int i = _literals.Count - 1; i >= 0; --i) {
+                if (_literals[i].Variable == var) return true;
+            }
+
+            return false;
         }
 
         public IEnumerator<Literal> GetEnumerator()
@@ -147,7 +156,7 @@ namespace FactSat
             return formula;
         }
 
-        private HashSet<Clause> _clauses;
+        private List<Clause> _clauses;
         private Literal _assignment;
 
         public int Count
@@ -178,7 +187,7 @@ namespace FactSat
         {
             Parent = null;
 
-            _clauses = new HashSet<Clause>();
+            _clauses = new List<Clause>();
         }
 
         private Formula(Formula parent, Literal assignment)
@@ -190,10 +199,17 @@ namespace FactSat
             int variable = assignment.Variable;
             bool positive = assignment.Positive;
 
-            foreach (var clause in parent._clauses) {
-                if (!clause.Any(x => x.Variable == variable)) {
-                    Add(clause.Clone());
+            var clauses = parent._clauses;
+
+            for (int i = clauses.Count - 1; i >= 0; --i) {
+                var clause = clauses[i];
+                if (!clause.HasVariable(variable)) {
+                    Add(clause);
                 } else if (clause.Any(x => x.Variable == variable && x.Positive != positive)) {
+                    if (clause.Count == 1) {
+                        Add(new Clause());
+                        break;
+                    }
                     Add(new Clause(clause.Where(x => x.Variable != variable)));
                 }
             }
