@@ -38,31 +38,45 @@ namespace FactSat
             return f;
         }
 
-        static Dictionary<int, int> _scores = new Dictionary<int, int>();
-
         static int PickSplitVariable(Formula f)
         {
-            var assigned = f.GetAssignments();
-            var valid = _scores.Keys
-                .Where(x => !assigned.Any(y => y.Variable == x))
-                .OrderByDescending(x => _scores[x]);
+            var vars = f
+                .SelectMany(x => x)
+                .Select(x => x.Variable)
+                .Distinct()
+                .ToArray();
 
-            int chosen = 0;
-            if (valid.Count() == 0) {
-                chosen = f
-                    .SelectMany(x => x.Select(y => y.Variable))
-                    .GroupBy(x => x)
-                    .Select(x => Tuple.Create(x.Key, x.Count()))
-                    .OrderByDescending(x => x.Item2)
-                    .First().Item1;
+            var minLength = f
+                .Where(x => x.Count > 0)
+                .Min(x => x.Count);
 
-                _scores.Add(chosen, 0);
-            } else {
-                chosen = valid.First();
-                ++_scores[chosen];
+            var shortest = f
+                .Where(x => x.Count == minLength)
+                .ToArray();
+
+            Dictionary<Literal, int> occurances = new Dictionary<Literal, int>(vars.Length * 2);
+
+            foreach (var var in vars) {
+                occurances.Add(new Literal(var, false), 0);
+                occurances.Add(new Literal(var, true), 0);
             }
 
-            return chosen;
+            foreach (var clause in shortest) {
+                foreach (var literal in clause) {
+                    ++occurances[literal];
+                }
+            }
+
+            var choice = vars
+                .Select(x => {
+                    int n = occurances[new Literal(x, false)];
+                    int p = occurances[new Literal(x, true)];
+                    return Tuple.Create(x, (1 << 16) * (n + p) + n * p);
+                })
+                .OrderByDescending(x => x.Item2)
+                .First().Item1;
+
+            return choice;
         }
 
         static Formula Satisfy(Formula f)
@@ -70,11 +84,11 @@ namespace FactSat
             f = UnitPropagation(f);
             f = PureLiteral(f);
 
-            if (f.Count == 0) return f;
             if (f.Any(x => x.Count == 0)) return null;
+            if (f.Count == 0) return f;
 
-            var assign = f.GetAssignments();
-            Console.WriteLine("{0}%", (assign.Count() * 100) / 1562);
+            var assign = f.GetAssignments().ToArray();
+            Console.WriteLine("{0}%", (assign.Count() * 100) / (f.SelectMany(x => x).Select(x => x.Variable).Distinct().Count() + assign.Count()));
 
             var split = PickSplitVariable(f);
 
@@ -100,7 +114,7 @@ namespace FactSat
             var instance = Factorisation.FromString(File.ReadAllText(args[0]));
             var f = Satisfy(instance.RootFormula);
 
-            if (f.Satisfied) {
+            if (f != null) {
                 Console.WriteLine("Satisfied!");
 
                 var inpA = IntFromBits(f, instance.Input1Bits);

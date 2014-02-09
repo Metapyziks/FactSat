@@ -234,7 +234,7 @@ namespace FactSat
 
         public Dictionary<int, bool> GetAssignmentsDict()
         {
-            return GetAssignments().ToDictionary(x => x.Variable, x => x.Positive);
+            return GetAssignments().OrderBy(x => x.Variable).ToDictionary(x => x.Variable, x => x.Positive);
         }
 
         public override string ToString()
