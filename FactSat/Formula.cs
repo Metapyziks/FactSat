@@ -82,11 +82,7 @@ namespace FactSat
         public void Add(Literal literal)
         {
             var old = _literals.FirstOrDefault(x => x.Variable == literal.Variable);
-            if (old.Variable == literal.Variable) {
-                if (old.Positive != literal.Positive) {
-                    _literals.Remove(old);
-                }
-
+            if (old.Variable == literal.Variable && old.Positive == literal.Positive) {
                 return;
             }
 
@@ -171,6 +167,8 @@ namespace FactSat
 
         public bool IsRoot { get { return Parent == null; } }
 
+        public bool Contradiction { get; private set; }
+
         public Formula Parent { get; private set; }
 
         public Formula this[Literal assignment]
@@ -208,11 +206,41 @@ namespace FactSat
                 } else if (clause.Any(x => x.Variable == variable && x.Positive != positive)) {
                     if (clause.Count == 1) {
                         Add(new Clause());
+                        Contradiction = true;
                         break;
                     }
                     Add(new Clause(clause.Where(x => x.Variable != variable)));
                 }
             }
+        }
+
+        private class Implication
+        {
+            public Literal Literal;
+            public IEnumerable<Implication> Previous;
+            public int Level;
+            public bool Decision { get { return Previous == null; } }
+
+            public Implication(Literal literal, IEnumerable<Implication> previous)
+            {
+                Literal = literal;
+                Previous = previous;
+                Level = previous.Max(x => x.Level);
+            }
+
+            public Implication(Literal literal, int level)
+            {
+                Literal = literal;
+                Previous = null;
+                Level = level;
+            }
+        }
+
+        public void Learn(Clause clause)
+        {
+            _clauses.Add(clause);
+
+            if (!IsRoot) Parent.Learn(clause);
         }
 
         public void Add(Clause clause)

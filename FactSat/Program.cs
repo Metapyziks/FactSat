@@ -14,7 +14,7 @@ namespace FactSat
         {
             Clause unitClause = null;
 
-            while ((unitClause = f.FirstOrDefault(x => x.Count == 1)) != null) {
+            while (!f.Contradiction && (unitClause = f.FirstOrDefault(x => x.Count == 1)) != null) {
                 f = f[unitClause[0]];
             }
 
@@ -82,9 +82,9 @@ namespace FactSat
         static Formula Satisfy(Formula f)
         {
             f = UnitPropagation(f);
-            f = PureLiteral(f);
+            // f = PureLiteral(f);
 
-            if (f.Any(x => x.Count == 0)) return null;
+            if (f.Contradiction) return null;
             if (f.Count == 0) return f;
 
             var assign = f.GetAssignments().ToArray();
