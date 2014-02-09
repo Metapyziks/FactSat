@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -42,22 +43,51 @@ namespace FactSat
             return f.First().First().Variable;
         }
 
-        static bool Satisfiable(Formula f)
+        static Formula Satisfy(Formula f)
         {
             f = UnitPropagation(f);
             f = PureLiteral(f);
 
-            if (f.Count == 0) return true;
-            if (f.Any(x => x.Count == 0)) return false;
+            if (f.Count == 0) return f;
+            if (f.Any(x => x.Count == 0)) return null;
 
             var split = PickSplitVariable(f);
 
-            return Satisfiable(f[split, false]) || Satisfiable(f[split, true]);
+            return Satisfy(f[split, false]) ?? Satisfy(f[split, true]);
+        }
+
+        static BigInteger IntFromBits(Formula f, IEnumerable<int> variables)
+        {
+            BigInteger num = 0;
+
+            var dict = f.GetAssignmentsDict();
+
+            foreach (var variable in variables) {
+                num <<= 1;
+                num |= (dict[variable] ? 1 : 0);
+            }
+
+            return num;
         }
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Satisfiable: {0}", Satisfiable(Formula.FromString(File.ReadAllText(args[0]))));
+            var instance = Factorisation.FromString(File.ReadAllText(args[0]));
+            var f = Satisfy(instance.RootFormula);
+
+            if (f.Satisfied) {
+                Console.WriteLine("Satisfied!");
+
+                var inpA = IntFromBits(f, instance.Input1Bits);
+                var inpB = IntFromBits(f, instance.Input2Bits);
+                var outp = IntFromBits(f, instance.OutputBits);
+
+                Console.WriteLine("{0} x {1} = {2}", inpA, inpB, outp);
+            } else {
+                Console.WriteLine("Could not satisfy :(");
+            }
+
+            Console.ReadKey();
         }
     }
 }

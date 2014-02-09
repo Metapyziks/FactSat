@@ -148,36 +148,55 @@ namespace FactSat
         }
 
         private HashSet<Clause> _clauses;
+        private Literal _assignment;
 
         public int Count
         {
             get { return _clauses.Count; }
         }
 
+        public bool Satisfied
+        {
+            get { return _clauses.Count == 0; }
+        }
+
+        public bool IsRoot { get { return Parent == null; } }
+
+        public Formula Parent { get; private set; }
+
         public Formula this[Literal assignment]
         {
-            get { return this[assignment.Variable, assignment.Positive]; }
+            get { return new Formula(this, assignment); }
         }
 
         public Formula this[int variable, bool assignment]
         {
-            get
-            {
-                var fclone = new Formula();
-                foreach (var clause in _clauses) {
-                    if (!clause.Any(x => x.Variable == variable)) {
-                        fclone.Add(clause.Clone());
-                    } else if (clause.Any(x => x.Variable == variable && x.Positive != assignment)) {
-                        fclone.Add(new Clause(clause.Where(x => x.Variable != variable)));
-                    }
-                }
-                return fclone;
-            }
+            get { return new Formula(this, new Literal(variable, assignment)); }
         }
-
+        
         private Formula()
         {
+            Parent = null;
+
             _clauses = new HashSet<Clause>();
+        }
+
+        private Formula(Formula parent, Literal assignment)
+            : this()
+        {
+            Parent = parent;
+            _assignment = assignment;
+
+            int variable = assignment.Variable;
+            bool positive = assignment.Positive;
+
+            foreach (var clause in parent._clauses) {
+                if (!clause.Any(x => x.Variable == variable)) {
+                    Add(clause.Clone());
+                } else if (clause.Any(x => x.Variable == variable && x.Positive != positive)) {
+                    Add(new Clause(clause.Where(x => x.Variable != variable)));
+                }
+            }
         }
 
         public void Add(Clause clause)
@@ -188,6 +207,18 @@ namespace FactSat
         public void Add(params Literal[] clause)
         {
             _clauses.Add(new Clause(clause));
+        }
+
+        public IEnumerable<Literal> GetAssignments()
+        {
+            if (IsRoot) return Enumerable.Empty<Literal>();
+
+            return Parent.GetAssignments().Union(new Literal[] { _assignment });
+        }
+
+        public Dictionary<int, bool> GetAssignmentsDict()
+        {
+            return GetAssignments().ToDictionary(x => x.Variable, x => x.Positive);
         }
 
         public override string ToString()
