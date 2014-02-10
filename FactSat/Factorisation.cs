@@ -9,7 +9,7 @@ namespace FactSat
 {
     class Factorisation
     {
-        public static Factorisation FromString(string str)
+        public static Factorisation FromProblemString(string str)
         {
             var factor = new Factorisation();
 
@@ -43,10 +43,36 @@ namespace FactSat
         }
 
         public Formula RootFormula { get; private set; }
+        public Dictionary<int, bool> Solution { get; private set; }
         public IEnumerable<int> OutputBits { get; private set; }
         public IEnumerable<int> Input1Bits { get; private set; }
         public IEnumerable<int> Input2Bits { get; private set; }
 
         private Factorisation() { }
+
+        public void ReadSolutionFromString(String str)
+        {
+            if (!str.StartsWith("SAT")) {
+                Solution = null;
+                return;
+            }
+
+            var regex = new Regex("-?[1-9][0-9]*");
+
+            Solution = new Dictionary<int, bool>();
+
+            var match = regex.Match(str);
+            while (match.Success) {
+                int assign = int.Parse(match.Value);
+
+                if (assign < 0) {
+                    Solution.Add(-assign, false);
+                } else {
+                    Solution.Add(assign, true);
+                }
+
+                match = match.NextMatch();
+            }
+        }
     }
 }

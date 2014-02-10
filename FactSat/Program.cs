@@ -95,15 +95,13 @@ namespace FactSat
             return Satisfy(f[split, false]) ?? Satisfy(f[split, true]);
         }
 
-        static BigInteger IntFromBits(Formula f, IEnumerable<int> variables)
+        static BigInteger IntFromBits(Dictionary<int, bool> solution, IEnumerable<int> variables)
         {
             BigInteger num = 0;
 
-            var dict = f.GetAssignmentsDict();
-
             foreach (var variable in variables) {
                 num <<= 1;
-                num |= (dict[variable] ? 1 : 0);
+                num |= (solution[variable] ? 1 : 0);
             }
 
             return num;
@@ -111,22 +109,41 @@ namespace FactSat
 
         static void Main(string[] args)
         {
-            var instance = Factorisation.FromString(File.ReadAllText(args[0]));
-            var f = Satisfy(instance.RootFormula);
+            foreach (var arg in args) {
+                var instance = Factorisation.FromProblemString(File.ReadAllText(arg));
+                var solutionPath = Path.GetFileNameWithoutExtension(arg) + ".sat";
 
-            if (f != null) {
-                Console.WriteLine("Satisfied!");
+                Dictionary<int, bool> solution;
 
-                var inpA = IntFromBits(f, instance.Input1Bits);
-                var inpB = IntFromBits(f, instance.Input2Bits);
-                var outp = IntFromBits(f, instance.OutputBits);
+                if (File.Exists(solutionPath)) {
+                    Console.WriteLine("Existing solution found");
 
-                Console.WriteLine("{0} x {1} = {2}", inpA, inpB, outp);
-            } else {
-                Console.WriteLine("Could not satisfy :(");
+                    instance.ReadSolutionFromString(File.ReadAllText(solutionPath));
+                    solution = instance.Solution;
+                } else {
+                    var f = Satisfy(instance.RootFormula);
+
+                    if (f != null) {
+                        Console.WriteLine("Satisfied!");
+                        solution = f.GetAssignmentsDict();
+                    } else {
+                        solution = null;
+                    }
+                }
+
+                if (solution == null) {
+                    Console.WriteLine("Unsatisfiable :(");
+                } else {
+
+                    var inpA = IntFromBits(solution, instance.Input1Bits);
+                    var inpB = IntFromBits(solution, instance.Input2Bits);
+                    var outp = IntFromBits(solution, instance.OutputBits);
+
+                    Console.WriteLine("{0} x {1} = {2}", inpA, inpB, outp);
+                }
+
+                Console.ReadKey(true);
             }
-
-            Console.ReadKey();
         }
     }
 }

@@ -1,0 +1,43 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{lipsum}
+\usepackage[english]{babel}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{pst-node}
+\usepackage{subfigure}
+\usepackage{wrapfig}
+\usepackage{stmaryrd}
+
+\begin{document}
+\begin{center}
+\begin{minipage}{0.48\textwidth}
+\begin{flushleft}
+\small{James King}
+\vspace{5mm}
+\end{flushleft}
+\end{minipage}
+\begin{minipage}{0.48\textwidth}
+\begin{flushright}
+\small{\today}
+\vspace{5mm}
+\end{flushright}
+\end{minipage}
+\large{\textbf{Integer Factorization / \textsc{SAT} Solving Coursework}}
+\end{center}
+
+\section*{Factors Found}
+\begin{tabular}{r r rcl c l}
+\# & Product & Result & & & Solver & Time \\
+1 & 14,843,833 & \textbf{UNSAT} & & & minisat & 0.343s \\
+2 & 549,221,821 & 14,843,833 &x& 37 & minisat & 1.734s \\
+3 & 961,748,941 & \textbf{UNSAT} & & & minisat & 6.328s \\
+4 & 57,396,757,499 & 271,109 &x& 211,711 & minisat & 69.125s \\
+5 & 1,047,090,939,649 & 1,079,621 &x& 969,869 & minisat & 163.218s \\
+6 & 10,685,266,071,481 & 15,467,041 &x& 690,841 & minisat & 160.015s \\
+7-12 & & & & & minisat & TIMEOUT \\
+\end{tabular}
+
+\section*{Own \textsc{SAT} Solver Implementation}
+\end{document}
