@@ -5,10 +5,7 @@
 \usepackage[margin=24mm]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{pst-node}
-\usepackage{subfigure}
-\usepackage{wrapfig}
-\usepackage{stmaryrd}
+\usepackage{hyperref}
 
 \begin{document}
 \begin{center}
@@ -24,7 +21,7 @@
 \vspace{5mm}
 \end{flushright}
 \end{minipage}
-\large{\textbf{Integer Factorization / \textsc{SAT} Solving Coursework}}
+\large{\textbf{Integer Factorization / SAT Solving Coursework}}
 \end{center}
 
 \section*{Factors Found}
@@ -36,8 +33,16 @@
 4 & 57,396,757,499 & 271,109 &x& 211,711 & minisat & 69.125s \\
 5 & 1,047,090,939,649 & 1,079,621 &x& 969,869 & minisat & 163.218s \\
 6 & 10,685,266,071,481 & 15,467,041 &x& 690,841 & minisat & 160.015s \\
-7-12 & & & & & minisat & TIMEOUT \\
+7-12 & & & & & minisat & TIMEOUT ($>$250s) \\
 \end{tabular}
 
-\section*{Own \textsc{SAT} Solver Implementation}
+\section*{SAT Solver Implementation}
+I had a quick try at implementing a solver, although didn't have much time to optimise it. It's a recursive DPLL solver using MOMS as a heuristic for splitting, implemented in C$^\sharp$.
+
+\vspace{5mm}
+\url{https://github.com/Metapyziks/FactSat}
+
+\vspace{5mm}
+\noindent
+Because the current approach is pretty inefficient (although gives correct solutions) I'll probably attempt a rewrite when I have the time.
 \end{document}
